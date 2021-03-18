@@ -1,10 +1,21 @@
 <template>
   <div>
-    <p>
-      <input v-model="question" :placeholder="fromTimeWindow" />
-      <input v-if="isHidden" v-model="seasons" placeholder="#" />
-      <button v-if="tmpStorage != undefined " v-on:click="knopf()">-></button>
-    </p>
+
+      <v-container grid-list-sm>
+        <v-layout align-center justify-center>
+          <v-flex md2>
+              <v-text-field v-model="question" :placeholder="fromTimeWindow"></v-text-field>
+           </v-flex>
+           <v-flex md2>
+              <v-text-field v-if="isHidden" v-model="seasons" placeholder="#" ></v-text-field>
+           </v-flex> 
+           <v-flex md1>
+              <v-btn outlined block class="primary" v-if="tmpStorage != undefined " v-on:click="knopf()">-></v-btn>
+           </v-flex> 
+        </v-layout>
+    </v-container>
+
+    
     <p>{{ answer }}</p>
 
     <div>
@@ -16,14 +27,13 @@
         </div>
       </div>
     </div>
-
     <!-- Poster wird hinzugefügt-->
     <div v-if="isHidden">
       <span v-for="value in storage" v-bind:key="value.id">
         <!-- Diese Variante, um mit dem Index zu arbeiten -->
         <img v-bind:src="thumbnail + value.poster_path" />
       </span>
-    </div>
+    </div>  
   </div>
 </template>
 
@@ -56,7 +66,16 @@ export default {
       fromTimeWindow: "Suche nach einer Anime-Serie",
     };
   },
+  mounted(){
+    if(localStorage.storage){
+      this.isHidden = true;
+      this.storage =JSON.parse(localStorage.storage);
+    }
+  },
   watch: {
+    storage(newPoster){
+      localStorage.storage = JSON.stringify(newPoster);
+    },
     // whenever question changes, this function will run
     question: function() {
       if (this.question.length > 1) {
@@ -75,6 +94,14 @@ export default {
     },
   },
   created: function() {
+  
+   /* var loaded = JSON.parse(localStorage.getItem('myPrefs'));
+    if(loaded) {
+
+        this.storage = loaded.storage;
+    }else{
+      console.warn('Kann nicht laden, eventuell dein erstes Mal hier?');
+    }*/
     // _.debounce is a function provided by lodash to limit how
     // often a particularly expensive operation can be run.
     // In this case, we want to limit how often we access
@@ -84,6 +111,18 @@ export default {
     // _.throttle), visit: https://lodash.com/docs#debounce
     this.debouncedGetAnswer = _.debounce(this.getAnswer, 500); // für Searchbar
   },
+  //Local Storage aufruf
+  /*computed: {
+      prefs: function() {
+        var p = {
+            storage: this.storage,
+            isHidden: true,
+            
+        };
+        localStorage.setItem('myPrefs', JSON.stringify(p));
+        return p;
+      }
+  },*/
   methods: {
     getAnswer: function() {
       this.answer = "wird gesucht...";
