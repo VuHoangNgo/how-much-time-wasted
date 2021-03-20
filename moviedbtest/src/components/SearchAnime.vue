@@ -2,7 +2,7 @@
   <div class="searchAnime">
     <div v-if="storage.length > 0">
       <span class="watchTime">
-        {{ "[" + tmpTime + "]" }} 
+        {{ "[" + watchtime + "]" }} 
        
       </span>
     </div>
