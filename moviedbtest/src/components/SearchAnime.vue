@@ -1,19 +1,19 @@
 <template>
-  <div class="searchAnime">
-    <div v-if="storage.length > 0">
-      <span class="watchTime">
-        {{ "[" + watchtime + "]" }} 
-       
-      </span>
-    </div>
-    <v-form>
-      <v-container>
+  <v-container>
+    <v-card  class="mx-auto my-12" max-width="1750">
+      <div class="searchAnime">
+        <div v-if="storage.length > 0">
+          <span class="watchTime">
+            {{ "[" + watchtime + "]" }}
+          </span>
+        </div>
+
         <v-row class="d-flex justify-space-around mb-6">
           <!--v-spacer></v-spacer>-->
           <!-- Eingabefeld Suche -->
-          <v-col sm="5" offset-sm="5" md="3" offset-md="0">
+          <v-col sm="7" offset-sm="5" md="3" offset-md="0">
             <v-text-field
-              v-model="question"
+              v-model="searchb"
               :placeholder="fromTimeWindow"
             ></v-text-field>
           </v-col>
@@ -37,43 +37,43 @@
             >
           </v-col>
         </v-row>
-      </v-container>
-    </v-form>
 
-    <!--cols="12" sm="4" md="1">-->
+        <!--cols="12" sm="4" md="1">-->
 
-    <p>{{ answer }}</p>
+        <p>{{ answer }}</p>
 
-    <div>
-      <!-- v-if="isHidden"        Ergebnis wird angezeigt -->
-      <div v-for="(value, i) in apiEingabe" v-bind:key="value.id">
-        <!-- Diese Variante, um mit dem Index zu arbeiten -->
-        <div class="test" v-if="i < 2" v-on:click="addtoTMP(value)">
-          {{ i + 1 }}: Ergebnis: {{ value.name }}
+        <div>
+          <!-- v-if="isHidden"        Ergebnis wird angezeigt -->
+          <div v-for="(value, i) in apiEingabe" v-bind:key="value.id">
+            <!-- Diese Variante, um mit dem Index zu arbeiten -->
+            <div class="test" v-if="i < 2" v-on:click="addtoTMP(value)">
+              {{ i + 1 }}: Ergebnis: {{ value.name }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Poster wird hinzugefügt-->
+        <div v-if="isHidden">
+          <v-container>
+            <v-row>
+              <span v-for="(value, i) in storage" v-bind:key="value.id">
+                <!-- Diese Variante, um mit dem Index zu arbeiten -->
+                <v-col sm="5" offset-sm="5" md="3" offset-md="0">
+                  <img v-bind:src="thumbnail + value.poster_path" />
+                  <br />
+                  <!-- LÖSCHEN BUTTON, um Storage zu clearen -->
+
+                  <v-btn outlined block class="primary" v-on:click="loeschen(i)"
+                    >Löschen</v-btn
+                  >
+                </v-col>
+              </span>
+            </v-row>
+          </v-container>
         </div>
       </div>
-    </div>
-
-    <!-- Poster wird hinzugefügt-->
-    <div v-if="isHidden">
-      <v-container>
-        <v-row>
-          <span v-for="(value, i) in storage" v-bind:key="value.id">
-            <!-- Diese Variante, um mit dem Index zu arbeiten -->
-            <v-col sm="5" offset-sm="5" md="3" offset-md="0">
-              <img v-bind:src="thumbnail + value.poster_path" />
-              <br />
-              <!-- LÖSCHEN BUTTON, um Storage zu clearen -->
-
-              <v-btn outlined block class="primary" v-on:click="loeschen(i)"
-                >Löschen</v-btn
-              >
-            </v-col>
-          </span>
-        </v-row>
-      </v-container>
-    </div>
-  </div>
+    </v-card>
+  </v-container>
 </template>
 
 <style scoped>
@@ -94,7 +94,7 @@ export default {
   name: "SearchAnime",
   data() {
     return {
-      question: "",
+      searchb: "",
       seasons: "", //Eingabefeld
       apiEingabe: undefined, //undefinierte Eingabe, die für Daten gebraucht wird
       fromTimeWindow: "Suche nach einer Anime-Serie",
@@ -109,7 +109,8 @@ export default {
 
       //Watchtime
       watchtime: 0,
-      tmpTime: 0,
+      tmpTime: null,
+      watchtimeStorage: [],
     };
   },
   //       LOCAL STORAGE-AUFRUF     //
@@ -118,28 +119,38 @@ export default {
       this.isHidden = true;
       this.storage = JSON.parse(localStorage.storage);
     }
-   /* if (localStorage.watchtime) {
-      this.watchtime = JSON.parse(localStorage.watchtime);
-    }*/
+     if (localStorage.watchtimeStorage) {
+      this.watchtimeStorage = JSON.parse(localStorage.watchtimeStorage);
+    }
   },
   watch: {
+    watchtimeStorage(update){ 
+      localStorage.watchtimeStorage = JSON.stringify(update);
+      this.watchtime = 0;
+      console.log("updated WATCHTIME STORAGE");
+      for(var i = 0;i<this.watchtimeStorage.length; i++){
+        this.watchtime = this.watchtime + this.watchtimeStorage[i];
+      }
+      console.log("summierte Watchtime: " + this.watchtime);
+      this.watchtime = this.timeConvert(this.watchtime);
+      //localStorage.watchtime = JSON.stringify(this.watchtime);
+    },
     //        LOCAL STORAGE        //
-    /*watchtime(newWatchtime) {
+    storage(update) {
+      // console.log(this.tmpTime);
+      
       console.log("updated");
-      localStorage.watchtime = JSON.stringify(newWatchtime);
-    },*/
-    storage(newPoster) {
-      console.log("updated");
-      localStorage.storage = JSON.stringify(newPoster);
+      localStorage.storage = JSON.stringify(update);
+      
     },
     // Jedes mal, wenn eine neue Eingabe getätigt wird, wird Suche aktualisiert
-    question: function() {
+    searchb: function() {
       //Länge des eingegebenen Strings wird überprüft
-      if (this.question.length > 1) {
+      if (this.searchb.length > 1) {
         this.answer = "";
         this.debouncedGetAnswer();
       } else {
-        this.answer = "Bitte noch " + (2 - this.question.length) + " Zeichen";
+        this.answer = "Bitte noch " + (2 - this.searchb.length) + " Zeichen";
       }
     },
   },
@@ -155,7 +166,7 @@ export default {
       axios
         .get(
           "https://api.themoviedb.org/3/search/tv?api_key=c13a406bc701f0f32b79f3ec5f3b2675&language=en-US&page=1&query=" +
-            this.question +
+            this.searchb +
             "&include_adult=false"
         )
         .then(function(response) {
@@ -169,7 +180,7 @@ export default {
         });
     },
     addtoTMP: function(value) {
-      this.question = value.name; //im Eingabefeld kommt das Ergebnis
+      this.searchb = value.name; //im Eingabefeld kommt das Ergebnis
       this.tmpStorage = value;
       //console.log(this.storage[0]+ " "+ this.storage[1]);
       this.isHidden = true;
@@ -216,18 +227,23 @@ export default {
         this.tmpMovieData.episode_run_time[0] *
         this.averageNumberOfEpisodes() *
         this.seasons;
-      
-      this.watchtime = this.timeConvert(this.tmpTime);
-      console.log(this.timeConvert(this.watchtime));
+    
+      this.watchtimeStorage.push(this.tmpTime);
+
+      console.log("timeStorage: " + this.watchtimeStorage);
+      console.log("aktuelle Minuten: " + this.tmpTime);
       // ZURÜCKSETZEN
+      //this.tmpTime = null;
       this.tmpStorage = undefined;
-      this.question = ""; //im Eingabefeld kommt das Ergebnis
+      this.searchb = ""; //im Eingabefeld kommt das Ergebnis
       this.apiEingabe = undefined;
     },
     //  LÖSCHE POSTER (löscht item aus dem Storage)
     loeschen: function(index) {
-     /* var tmpTest = this.tmpTime;
-      this.tmpTime = this.storage[index].tmpTime - tmpTest;*/
+      //this.watchtime = this.tmpTime - this.watchtimeDelete;
+      this.$delete(this.watchtimeStorage, index);
+      console.log(this.watchtimeStorage);
+      //this.watchtime = this.timeConvert(this.watchtime);
       this.$delete(this.storage, index);
     },
   },
