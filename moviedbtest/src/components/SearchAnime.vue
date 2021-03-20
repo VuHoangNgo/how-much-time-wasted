@@ -1,39 +1,78 @@
 <template>
-  <div>
+  <div class="searchAnime">
+    <div v-if="storage.length > 0">
+      <span class="watchTime">
+        {{ "[" + tmpTime + "]" }} 
+       
+      </span>
+    </div>
+    <v-form>
+      <v-container>
+        <v-row class="d-flex justify-space-around mb-6">
+          <!--v-spacer></v-spacer>-->
+          <!-- Eingabefeld Suche -->
+          <v-col sm="5" offset-sm="5" md="3" offset-md="0">
+            <v-text-field
+              v-model="question"
+              :placeholder="fromTimeWindow"
+            ></v-text-field>
+          </v-col>
+          <!-- Eingabefeld Season -->
+          <v-col sm="5" offset-sm="5" md="1" offset-md="0">
+            <v-text-field
+              v-if="isHidden"
+              v-model="seasons"
+              placeholder="#"
+            ></v-text-field>
+          </v-col>
+          <!-- Eingabefeld Button -->
+          <v-col sm="5" offset-sm="3" md="1" offset-md="0">
+            <v-btn
+              outlined
+              block
+              class="primary"
+              v-if="tmpStorage != undefined"
+              v-on:click="hinzufuegen()"
+              >-></v-btn
+            >
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-form>
 
-      <v-container grid-list-sm>
-        <v-layout align-center justify-center>
-          <v-flex md2>
-              <v-text-field v-model="question" :placeholder="fromTimeWindow"></v-text-field>
-           </v-flex>
-           <v-flex md2>
-              <v-text-field v-if="isHidden" v-model="seasons" placeholder="#" ></v-text-field>
-           </v-flex> 
-           <v-flex md1>
-              <v-btn outlined block class="primary" v-if="tmpStorage != undefined " v-on:click="knopf()">-></v-btn>
-           </v-flex> 
-        </v-layout>
-    </v-container>
+    <!--cols="12" sm="4" md="1">-->
 
-    
     <p>{{ answer }}</p>
 
     <div>
       <!-- v-if="isHidden"        Ergebnis wird angezeigt -->
       <div v-for="(value, i) in apiEingabe" v-bind:key="value.id">
         <!-- Diese Variante, um mit dem Index zu arbeiten -->
-        <div class="test" v-if="i < 2" v-on:click="addtolist(value)">
+        <div class="test" v-if="i < 2" v-on:click="addtoTMP(value)">
           {{ i + 1 }}: Ergebnis: {{ value.name }}
         </div>
       </div>
     </div>
+
     <!-- Poster wird hinzugefügt-->
     <div v-if="isHidden">
-      <span v-for="value in storage" v-bind:key="value.id">
-        <!-- Diese Variante, um mit dem Index zu arbeiten -->
-        <img v-bind:src="thumbnail + value.poster_path" />
-      </span>
-    </div>  
+      <v-container>
+        <v-row>
+          <span v-for="(value, i) in storage" v-bind:key="value.id">
+            <!-- Diese Variante, um mit dem Index zu arbeiten -->
+            <v-col sm="5" offset-sm="5" md="3" offset-md="0">
+              <img v-bind:src="thumbnail + value.poster_path" />
+              <br />
+              <!-- LÖSCHEN BUTTON, um Storage zu clearen -->
+
+              <v-btn outlined block class="primary" v-on:click="loeschen(i)"
+                >Löschen</v-btn
+              >
+            </v-col>
+          </span>
+        </v-row>
+      </v-container>
+    </div>
   </div>
 </template>
 
@@ -58,71 +97,56 @@ export default {
       question: "",
       seasons: "", //Eingabefeld
       apiEingabe: undefined, //undefinierte Eingabe, die für Daten gebraucht wird
+      fromTimeWindow: "Suche nach einer Anime-Serie",
       answer: "Bitte mindestens 2 Buchstaben eingeben",
-      storage: [], // vorübergehendes Storage
+
+      tmpMovieData: [],
+      storage: [], // storage mit Daten von einzelnen Serien
       thumbnail: "https://image.tmdb.org/t/p/w200/",
+
       tmpStorage: undefined,
       isHidden: false,
-      fromTimeWindow: "Suche nach einer Anime-Serie",
+
+      //Watchtime
+      watchtime: 0,
+      tmpTime: 0,
     };
   },
-  mounted(){
-    if(localStorage.storage){
+  //       LOCAL STORAGE-AUFRUF     //
+  mounted() {
+    if (localStorage.storage) {
       this.isHidden = true;
-      this.storage =JSON.parse(localStorage.storage);
+      this.storage = JSON.parse(localStorage.storage);
     }
+   /* if (localStorage.watchtime) {
+      this.watchtime = JSON.parse(localStorage.watchtime);
+    }*/
   },
   watch: {
-    storage(newPoster){
+    //        LOCAL STORAGE        //
+    /*watchtime(newWatchtime) {
+      console.log("updated");
+      localStorage.watchtime = JSON.stringify(newWatchtime);
+    },*/
+    storage(newPoster) {
+      console.log("updated");
       localStorage.storage = JSON.stringify(newPoster);
     },
-    // whenever question changes, this function will run
+    // Jedes mal, wenn eine neue Eingabe getätigt wird, wird Suche aktualisiert
     question: function() {
+      //Länge des eingegebenen Strings wird überprüft
       if (this.question.length > 1) {
-        //länge des eingegebenen Strings
         this.answer = "";
         this.debouncedGetAnswer();
       } else {
         this.answer = "Bitte noch " + (2 - this.question.length) + " Zeichen";
       }
-
-      /* console.log(this.question);
-      this.answer = "Waiting for you to stop typing...";
-      //this.debouncedGetAnswer()                         
-      this.getAnswer();
-      this.getAnswer = _.debounce(this.getAnswer, 500)  */
     },
   },
   created: function() {
-  
-   /* var loaded = JSON.parse(localStorage.getItem('myPrefs'));
-    if(loaded) {
-
-        this.storage = loaded.storage;
-    }else{
-      console.warn('Kann nicht laden, eventuell dein erstes Mal hier?');
-    }*/
-    // _.debounce is a function provided by lodash to limit how
-    // often a particularly expensive operation can be run.
-    // In this case, we want to limit how often we access
-    // yesno.wtf/api, waiting until the user has completely
-    // finished typing before making the ajax request. To learn
-    // more about the _.debounce function (and its cousin
-    // _.throttle), visit: https://lodash.com/docs#debounce
-    this.debouncedGetAnswer = _.debounce(this.getAnswer, 500); // für Searchbar
+    // Delay für Searchbar
+    this.debouncedGetAnswer = _.debounce(this.getAnswer, 500);
   },
-  //Local Storage aufruf
-  /*computed: {
-      prefs: function() {
-        var p = {
-            storage: this.storage,
-            isHidden: true,
-            
-        };
-        localStorage.setItem('myPrefs', JSON.stringify(p));
-        return p;
-      }
-  },*/
   methods: {
     getAnswer: function() {
       this.answer = "wird gesucht...";
@@ -135,50 +159,76 @@ export default {
             "&include_adult=false"
         )
         .then(function(response) {
-          vm.apiEingabe = response.data.results; //einspeichern von dem Eingegebenen (question)
+          //Einspeichern von dem Eingegebenen (question)
+          vm.apiEingabe = response.data.results;
           console.log(response.data.results);
-          //console.log("Soviele Seasons: " + response.data.seasons.length); //--> GET/tv/{tv_id}
           vm.answer = "";
-          // vm.answer = _.capitalize(response.data.answer)
         })
         .catch(function(error) {
           vm.apiEingabe = "Error! Could not reach the API. " + error;
         });
     },
-
-    //<img :src="path + '/images/services/'+ picture" class="img-circle" alt="Services" /> </div>
-    addtolist: function(value) {
+    addtoTMP: function(value) {
       this.question = value.name; //im Eingabefeld kommt das Ergebnis
       this.tmpStorage = value;
       //console.log(this.storage[0]+ " "+ this.storage[1]);
       this.isHidden = true;
-
-      var vn = this;
-    
-       axios
+      var vm = this;
+      //console.log(this.tmpStorage.id);
+      axios
         .get(
           "https://api.themoviedb.org/3/tv/" +
             this.tmpStorage.id +
             "?api_key=c13a406bc701f0f32b79f3ec5f3b2675&language=en-US"
         )
         .then(function(response) {
-          vn.seasons = response.data.seasons.length; //einspeichern von dem Eingegebenen (question)
-          console.log("Soviele Seasons: " + response.data.seasons.length); //--> GET/tv/{tv_id}
-          //vm.answer = "";
-          // vm.answer = _.capitalize(response.data.answer)
+          //  Speicher komplette Daten um später zuzugreifen
+          vm.tmpMovieData = response.data;
+          //  einspeichern von dem Eingegebenen (question)
+          vm.seasons = response.data.number_of_seasons;
         })
         .catch(function(error) {
-          vn.seasons = "Error! Could not reach the API. " + error;
-        })
+          vm.seasons = "Error! Could not reach the API. " + error;
+        });
     },
-    knopf: function() {
+    averageNumberOfEpisodes: function() {
+      this.tmpMovieData =
+        this.tmpMovieData.number_of_episodes /
+        this.tmpMovieData.number_of_seasons; //fehler
+      return this.tmpMovieData;
+    },
+    timeConvert: function(n) {
+      var num = n;
+      var d = Math.floor(num / 1440); // 60*24
+      var h = Math.floor((num - d * 1440) / 60);
+      var m = Math.round(num % 60);
+
+      if (d > 0) {
+        return d + " day(s), " + h + " hours, " + m + " minutes";
+      } else {
+        return h + " hours, " + m + " minutes";
+      }
+    },
+    hinzufuegen: function() {
       this.isHidden = true;
       this.storage.push(this.tmpStorage);
-
+      this.tmpTime =
+        this.tmpMovieData.episode_run_time[0] *
+        this.averageNumberOfEpisodes() *
+        this.seasons;
+      
+      this.watchtime = this.timeConvert(this.tmpTime);
+      console.log(this.timeConvert(this.watchtime));
       // ZURÜCKSETZEN
       this.tmpStorage = undefined;
       this.question = ""; //im Eingabefeld kommt das Ergebnis
       this.apiEingabe = undefined;
+    },
+    //  LÖSCHE POSTER (löscht item aus dem Storage)
+    loeschen: function(index) {
+     /* var tmpTest = this.tmpTime;
+      this.tmpTime = this.storage[index].tmpTime - tmpTest;*/
+      this.$delete(this.storage, index);
     },
   },
 };
