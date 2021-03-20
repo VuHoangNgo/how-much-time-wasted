@@ -1,15 +1,14 @@
 <template>
   <v-container>
-    <v-card  class="mx-auto my-12" max-width="1750">
+    <v-card class="mx-auto my-12" max-width="1750">
       <div class="searchAnime">
         <div v-if="storage.length > 0">
           <span class="watchTime">
-            {{ "[" + watchtime + "]" }}
+            {{ "[" + watchtimeSummierung + "]" }}
           </span>
         </div>
 
         <v-row class="d-flex justify-space-around mb-6">
-          <!--v-spacer></v-spacer>-->
           <!-- Eingabefeld Suche -->
           <v-col sm="7" offset-sm="5" md="3" offset-md="0">
             <v-text-field
@@ -25,7 +24,7 @@
               placeholder="#"
             ></v-text-field>
           </v-col>
-          <!-- Eingabefeld Button -->
+          <!-- Button zum Hinzuügen von Serie -->
           <v-col sm="5" offset-sm="3" md="1" offset-md="0">
             <v-btn
               outlined
@@ -38,12 +37,10 @@
           </v-col>
         </v-row>
 
-        <!--cols="12" sm="4" md="1">-->
-
         <p>{{ answer }}</p>
 
         <div>
-          <!-- v-if="isHidden"        Ergebnis wird angezeigt -->
+          <!--  Ergebnis der Suche wird angezeigt -->
           <div v-for="(value, i) in apiEingabe" v-bind:key="value.id">
             <!-- Diese Variante, um mit dem Index zu arbeiten -->
             <div class="test" v-if="i < 2" v-on:click="addtoTMP(value)">
@@ -52,7 +49,7 @@
           </div>
         </div>
 
-        <!-- Poster wird hinzugefügt-->
+        <!-- Serie (Poster) wird hinzugefügt-->
         <div v-if="isHidden">
           <v-container>
             <v-row>
@@ -61,8 +58,8 @@
                 <v-col sm="5" offset-sm="5" md="3" offset-md="0">
                   <img v-bind:src="thumbnail + value.poster_path" />
                   <br />
-                  <!-- LÖSCHEN BUTTON, um Storage zu clearen -->
 
+                  <!-- LÖSCHEN-BUTTON, um Storage zu clearen -->
                   <v-btn outlined block class="primary" v-on:click="loeschen(i)"
                     >Löschen</v-btn
                   >
@@ -82,33 +79,33 @@
 }
 </style>
 <script>
-//import { defineComponent } from '@vue/composition-api'
 import Vue from "vue";
 import axios from "axios";
 import VueAxios from "vue-axios";
 import _ from "lodash";
 
-Vue.use(VueAxios, axios, _); //binden
+//benutze vom Import
+Vue.use(VueAxios, axios, _);
 
 export default {
   name: "SearchAnime",
   data() {
     return {
       searchb: "",
-      seasons: "", //Eingabefeld
-      apiEingabe: undefined, //undefinierte Eingabe, die für Daten gebraucht wird
-      fromTimeWindow: "Suche nach einer Anime-Serie",
+      seasons: "", //Eingabefeld für die Searchbar
+      apiEingabe: undefined,
+      fromTimeWindow: "Suche nach einer Serie",
       answer: "Bitte mindestens 2 Buchstaben eingeben",
-
-      tmpMovieData: [],
-      storage: [], // storage mit Daten von einzelnen Serien
-      thumbnail: "https://image.tmdb.org/t/p/w200/",
-
-      tmpStorage: undefined,
       isHidden: false,
 
-      //Watchtime
-      watchtime: 0,
+      //  torage von Serien
+      tmpMovieData: [],
+      storage: [], // storage mit Daten von einzelnen Serien
+      tmpStorage: undefined,
+      thumbnail: "https://image.tmdb.org/t/p/w200/",
+
+      //  Watchtime
+      watchtimeSummierung: 0,
       tmpTime: null,
       watchtimeStorage: [],
     };
@@ -119,30 +116,30 @@ export default {
       this.isHidden = true;
       this.storage = JSON.parse(localStorage.storage);
     }
-     if (localStorage.watchtimeStorage) {
+    if (localStorage.watchtimeStorage) {
       this.watchtimeStorage = JSON.parse(localStorage.watchtimeStorage);
     }
   },
   watch: {
-    watchtimeStorage(update){ 
+    watchtimeStorage(update) {
       localStorage.watchtimeStorage = JSON.stringify(update);
-      this.watchtime = 0;
+      this.watchtimeSummierung = 0;
       console.log("updated WATCHTIME STORAGE");
-      for(var i = 0;i<this.watchtimeStorage.length; i++){
-        this.watchtime = this.watchtime + this.watchtimeStorage[i];
+      for (var i = 0; i < this.watchtimeStorage.length; i++) {
+        this.watchtimeSummierung =
+          this.watchtimeSummierung + this.watchtimeStorage[i];
       }
-      console.log("summierte Watchtime: " + this.watchtime);
-      this.watchtime = this.timeConvert(this.watchtime);
-      //localStorage.watchtime = JSON.stringify(this.watchtime);
+      console.log("summierte Watchtime: " + this.watchtimeSummierung);
+      this.watchtimeSummierung = this.timeConvert(this.watchtimeSummierung);
     },
-    //        LOCAL STORAGE        //
+    //        LOCAL STORAGE DER DATEN       //
     storage(update) {
       // console.log(this.tmpTime);
-      
+
       console.log("updated");
       localStorage.storage = JSON.stringify(update);
-      
     },
+    //        SEARCH BAR        //
     // Jedes mal, wenn eine neue Eingabe getätigt wird, wird Suche aktualisiert
     searchb: function() {
       //Länge des eingegebenen Strings wird überprüft
@@ -155,8 +152,7 @@ export default {
     },
   },
   created: function() {
-    // Delay für Searchbar
-    this.debouncedGetAnswer = _.debounce(this.getAnswer, 500);
+    this.debouncedGetAnswer = _.debounce(this.getAnswer, 500); // Delay für Searchbar
   },
   methods: {
     getAnswer: function() {
@@ -170,7 +166,7 @@ export default {
             "&include_adult=false"
         )
         .then(function(response) {
-          //Einspeichern von dem Eingegebenen (question)
+          //Einspeichern von Eingabe (searchbar)
           vm.apiEingabe = response.data.results;
           console.log(response.data.results);
           vm.answer = "";
@@ -195,7 +191,7 @@ export default {
         .then(function(response) {
           //  Speicher komplette Daten um später zuzugreifen
           vm.tmpMovieData = response.data;
-          //  einspeichern von dem Eingegebenen (question)
+          //  einspeichern von dem Eingegebenen (seasons)
           vm.seasons = response.data.number_of_seasons;
         })
         .catch(function(error) {
@@ -205,7 +201,7 @@ export default {
     averageNumberOfEpisodes: function() {
       this.tmpMovieData =
         this.tmpMovieData.number_of_episodes /
-        this.tmpMovieData.number_of_seasons; //fehler
+        this.tmpMovieData.number_of_seasons;
       return this.tmpMovieData;
     },
     timeConvert: function(n) {
@@ -227,23 +223,21 @@ export default {
         this.tmpMovieData.episode_run_time[0] *
         this.averageNumberOfEpisodes() *
         this.seasons;
-    
+
+      //  Pushe aktuelle Watchtime in WatchtimeStorage
       this.watchtimeStorage.push(this.tmpTime);
 
       console.log("timeStorage: " + this.watchtimeStorage);
       console.log("aktuelle Minuten: " + this.tmpTime);
-      // ZURÜCKSETZEN
-      //this.tmpTime = null;
+      // ZURÜCKSETZEN der Variablen nach Hinzufügen
       this.tmpStorage = undefined;
-      this.searchb = ""; //im Eingabefeld kommt das Ergebnis
+      this.searchb = "";
       this.apiEingabe = undefined;
     },
-    //  LÖSCHE POSTER (löscht item aus dem Storage)
+    //  LÖSCHE POSTER (löscht item aus dem Storage) //
     loeschen: function(index) {
-      //this.watchtime = this.tmpTime - this.watchtimeDelete;
       this.$delete(this.watchtimeStorage, index);
-      console.log(this.watchtimeStorage);
-      //this.watchtime = this.timeConvert(this.watchtime);
+      //console.log(this.watchtimeStorage);
       this.$delete(this.storage, index);
     },
   },

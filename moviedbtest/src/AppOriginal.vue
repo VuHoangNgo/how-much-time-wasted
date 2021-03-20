@@ -8,7 +8,6 @@
 <script>
 
 import SearchAnime from './components/SearchAnime'
-//import AllMovieStorage from './components/AllMovieStorage'
 
 export default {
   name: 'AppOriginal',
