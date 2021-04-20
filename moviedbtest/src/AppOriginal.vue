@@ -1,21 +1,21 @@
 <template>
   <div id="app">
-    <SearchAnime />
-    <!-- <AllMovieStorage /> -->
+    <v-app>
+      <SearchAnime />
+    </v-app>
   </div>
 </template>
 
 <script>
-
-import SearchAnime from './components/SearchAnime'
+import SearchAnime from "./components/SearchAnime";
 
 export default {
-  name: 'AppOriginal',
+  name: "AppOriginal",
   components: {
     SearchAnime,
     //AllMovieStorage
-  }
-}
+  },
+};
 </script>
 
 <style>

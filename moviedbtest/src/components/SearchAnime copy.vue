@@ -1,5 +1,5 @@
 <template>
-  <v-container :style="{ backgroundImage: 'url(' + bimage + ')' }" class=" my-container">
+  <v-container :style="bimage" class="my-container">
     <div class="searchAnime">
       <v-row class="watchtimeText justify-center ">
         <v-col class="col-8 col-sm-8 ">
@@ -11,12 +11,8 @@
         </v-col>
       </v-row>
 
-      <v-row id="searchRow" justify="end" align="center">
-        <v-col
-          cols="6"
-          id="searchCol"
-          xl="3"
-        >
+      <v-row id="searchRow" class="justify-end">
+        <v-col id="searchCol" class="col-6 col-xs-6 col-sm-6 col-md-6 col-lg-6 col-xl-6">
           <!-- Eingabefeld Search -->
           <v-text-field
             flat
@@ -42,10 +38,8 @@
         <v-col
           class="text-left col-3 col-xs-3 col-sm-3 col-md-3 col-lg-3 col-xl-1"
         >
-        <div class="pl-2">
           <!-- Button zum Hinzufügen von Serie -->
           <v-btn
-            
             small
             fab
             depressed
@@ -53,35 +47,28 @@
             v-if="tmpStorage != undefined"
             v-on:click="hinzufuegen()"
           >
-            <v-icon  size="34">play_circle_outline</v-icon>
+            <v-icon id="icon-conf" size="34">play_circle_outline</v-icon>
           </v-btn>
-          </div>
         </v-col>
       </v-row>
 
-      <v-row
-        class="text--secondary text-left offset-1 offset-xs-1 offset-sm-1 offset-md-1 offset-lg-1 offset-xl-1 answer-field"
-      >
+      <v-row class="text--secondary text-left answer-field">
         <v-col>
           <p>{{ answer }}</p>
         </v-col>
       </v-row>
 
-      <v-row id="resultsBoxUnderline">
-        <v-col
-          class="text-left offset-1 offset-xs-1 offset-sm-1 offset-md-1 offset-lg-1 offset-xl-1"
-        >
-          <!--  Ergebnis der Suche wird angezeigt -->
-          <div v-for="(value, i) in apiEingabe" v-bind:key="value.id">
-            <!-- Diese Variante, um mit dem Index zu arbeiten -->
-            <div
-              class="searchResults"
-              v-if="i < 2"
-              v-on:click="addtoTMP(value)"
-            >
-              {{ i + 1 }}: {{ value.name }}
+      <v-row class="justify-center my-row">
+        <v-col class="my-col">
+          
+            <!--  Ergebnis der Suche wird angezeigt -->
+            <div v-for="(value, i) in apiEingabe" v-bind:key="value.id">
+              <!-- Diese Variante, um mit dem Index zu arbeiten -->
+              <div class="test" v-if="i < 2" v-on:click="addtoTMP(value)">
+                {{ i + 1 }}: Ergebnis: {{ value.name }}
+              </div>
             </div>
-          </div>
+         
         </v-col>
       </v-row>
 
@@ -118,31 +105,27 @@
 
 <style scoped>
 body {
-  margin-top: 20px;
+  margin-top:20px;
 }
 .watchtimeText {
   font-size: 3em;
 }
 .answer-field {
-  font-size: 1em;
+  padding-left: 88px;
+  font-size: 1.0em;
 }
 .search-input {
   height: 40px;
   font-size: 1.8em;
+  
 }
 
-.searchResults {
+.test {
   cursor: pointer;
-  font-size: 2em;
-}
-
-#resultsBoxUnderline {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-
 }
 
 .my-container {
-  background-size: cover;
+
 }
 
 .my-row {
@@ -179,9 +162,9 @@ export default {
   data() {
     return {
       //  Background Image
-      bimage: "",
+      bimage: { backgroundImage: ""},
       bimageTmp: "https://image.tmdb.org/t/p/w342",
-
+      
       searchb: "",
       seasons: "", //Eingabefeld für die Searchbar
       apiEingabe: undefined,
@@ -206,8 +189,6 @@ export default {
     if (localStorage.storage) {
       this.isHidden = true;
       this.storage = JSON.parse(localStorage.storage);
-        this.bimage = this.bimageTmp + this.storage[0].poster_path; //Hintergrundbild funktioniert noch nicht
-
     }
     if (localStorage.watchtimeStorage) {
       this.watchtimeStorage = JSON.parse(localStorage.watchtimeStorage);
@@ -244,7 +225,7 @@ export default {
           "Bitte noch " + (2 - this.searchb.length) + " Zeichen eingeben";
       }
     },
-    /* bimage: function(){
+   /* bimage: function(){
       //this.bimage = this.thumbnail+ this.tmpStorage.poster_path; 
       console.log("Background wurde geupdated");
     }*/
@@ -253,23 +234,24 @@ export default {
     this.debouncedGetAnswer = _.debounce(this.getAnswer, 500); // Delay für Searchbar
   },
   methods: {
-    getAnswer() {
+    getAnswer: function() {
       this.answer = "wird gesucht...";
+      var vm = this;
 
       axios
         .get(
           "https://api.themoviedb.org/3/search/tv?api_key=c13a406bc701f0f32b79f3ec5f3b2675&language=en-US&page=1&query=" +
             this.searchb +
-            "&include_adult=true"
+            "&include_adult=false"
         )
-        .then((response) => {
+        .then(function(response) {
           //Einspeichern von Eingabe (searchbar)
-          this.apiEingabe = response.data.results;
+          vm.apiEingabe = response.data.results;
           console.log(response.data.results);
-          this.answer = "";
+          vm.answer = "";
         })
-        .catch((error) => {
-          this.apiEingabe = "Error! Could not reach the API. " + error;
+        .catch(function(error) {
+          vm.apiEingabe = "Error! Could not reach the API. " + error;
         });
     },
     addtoTMP: function(value) {
@@ -288,7 +270,6 @@ export default {
         .then(function(response) {
           //  Speicher komplette Daten um später zuzugreifen
           vm.tmpMovieData = response.data;
-          console.log("TEST " , response.data);
           //  einspeichern von dem Eingegebenen (seasons)
           vm.seasons = response.data.number_of_seasons;
         })
@@ -325,7 +306,7 @@ export default {
       //  Pushe aktuelle Watchtime in WatchtimeStorage
       this.watchtimeStorage.push(this.tmpTime);
       this.bimage = this.bimageTmp + this.tmpStorage.poster_path; //Hintergrundbild funktioniert noch nicht
-
+     
       console.log("Pfad meines Backgrounds: " + this.bimage);
       console.log("timeStorage: " + this.watchtimeStorage);
       console.log("aktuelle Minuten: " + this.tmpTime);
